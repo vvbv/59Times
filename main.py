@@ -69,7 +69,7 @@ class AnalogClock59Widget(QWidget):
         # Draw hour markers
         painter.setPen(QPen(QColor(0, 0, 0), 2))
         for i in range(59):
-            angle = i * 6.1  # 360 degrees / 59 segments = ~6.1 degrees per marker
+            angle = i * (360.0 / 59)  # Distribute markers evenly around the clock face
             # Longer lines for every 5th marker
             if i % 5 == 0:
                 outer_radius = 90
@@ -78,10 +78,11 @@ class AnalogClock59Widget(QWidget):
                 outer_radius = 90
                 inner_radius = 85
                 
-            x1 = int(inner_radius * -1 * (angle / 360.0) * 6.283)
-            y1 = int(inner_radius * (angle / 360.0) * 6.283)
-            x2 = int(outer_radius * -1 * (angle / 360.0) * 6.283)
-            y2 = int(outer_radius * (angle / 360.0) * 6.283)
+            radians = angle * math.pi / 180.0
+            x1 = int(inner_radius * math.cos(radians))
+            y1 = int(inner_radius * math.sin(radians))
+            x2 = int(outer_radius * math.cos(radians))
+            y2 = int(outer_radius * math.sin(radians))
             
             painter.drawLine(x1, y1, x2, y2)
             
@@ -111,9 +112,9 @@ class AnalogClock59Widget(QWidget):
         
     def drawHand(self, painter, angle, length):
         angle = angle - 90  # Adjust for default coordination system (0 degrees at 3 o'clock)
-        radians = angle * 3.14159265358979323846 / 180.0
-        x = length * -1 * -math.cos(radians)
-        y = length * -math.sin(radians)
+        radians = angle * math.pi / 180.0
+        x = length * math.cos(radians)
+        y = length * math.sin(radians)
         painter.drawLine(0, 0, int(x), int(y))
 
 class Clock59Window(QMainWindow):

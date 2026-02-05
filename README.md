@@ -32,6 +32,11 @@ python flask_app.py
 
 The web service will be available at `http://localhost:5000`.
 
+For development with debug mode enabled:
+```
+FLASK_DEBUG=true python flask_app.py
+```
+
 #### Web Interface
 - **`/time`** - Elegant black and white web interface displaying the current 59-based time
 

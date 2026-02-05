@@ -116,20 +116,38 @@ def get_standard_time(timezone_str='UTC'):
         return datetime.now().strftime('%H:%M:%S')
 
 
-def get_ms_to_next_second():
+def get_ms_to_next_second(tz=None):
     """Calculate milliseconds remaining until the next second."""
-    now = datetime.now()
+    if tz:
+        now = datetime.now(tz)
+    else:
+        now = datetime.now()
     microseconds_remaining = 1000000 - now.microsecond
     return int(microseconds_remaining / 1000)
 
 
-def get_ms_to_next_minute():
+def get_ms_to_next_minute(tz=None):
     """Calculate milliseconds remaining until the next minute."""
-    now = datetime.now()
+    if tz:
+        now = datetime.now(tz)
+    else:
+        now = datetime.now()
     seconds_remaining = 60 - now.second - 1
     microseconds_remaining = 1000000 - now.microsecond
     total_ms = (seconds_remaining * 1000) + int(microseconds_remaining / 1000)
     return total_ms
+
+
+def clock59_from_seconds(current_seconds):
+    """
+    Calculate 59-based time from seconds since midnight.
+    This helper function is used to avoid duplicating the conversion logic.
+    """
+    current_seconds_59 = current_seconds * TIME_RELATION
+    current_hour = current_seconds_59 / pow(59, 2)
+    current_minute = (59/100) * ((current_hour - int(current_hour)) * 100)
+    current_second = (59/100) * ((current_minute - int(current_minute)) * 100)
+    return [int(current_hour), int(current_minute), int(current_second)]
 
 
 def clock59_with_timezone(timezone_str='UTC'):
@@ -144,13 +162,7 @@ def clock59_with_timezone(timezone_str='UTC'):
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
         current_seconds = (now - midnight).total_seconds()
         
-        # Apply the 59-based conversion
-        current_seconds_59 = current_seconds * TIME_RELATION
-        current_hour = current_seconds_59 / pow(59, 2)
-        current_minute = (59/100) * ((current_hour - int(current_hour)) * 100)
-        current_second = (59/100) * ((current_minute - int(current_minute)) * 100)
-        
-        return [int(current_hour), int(current_minute), int(current_second)]
+        return clock59_from_seconds(current_seconds)
     except pytz.UnknownTimeZoneError:
         # Fallback to local time calculation
         return clock59()
@@ -215,16 +227,16 @@ def api_time_timezone(timezone_str):
     Returns JSON with time_59, standard_time, timezone, and calibration values.
     """
     try:
-        # Validate timezone
-        pytz.timezone(timezone_str)
+        # Validate timezone and get timezone object
+        tz = pytz.timezone(timezone_str)
         time_59_list = clock59_with_timezone(timezone_str)
         
         return jsonify({
             'time_59': formatTime(time_59_list),
             'standard_time': get_standard_time(timezone_str),
             'timezone': timezone_str,
-            'ms_to_next_second': get_ms_to_next_second(),
-            'ms_to_next_minute': get_ms_to_next_minute()
+            'ms_to_next_second': get_ms_to_next_second(tz),
+            'ms_to_next_minute': get_ms_to_next_minute(tz)
         })
     except pytz.UnknownTimeZoneError:
         return jsonify({
